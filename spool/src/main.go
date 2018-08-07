@@ -46,6 +46,9 @@ var AppDb = os.Getenv("APP_DB_SERVER")
 // AppRmq name
 var AppRmq = os.Getenv("APP_RMQ_SERVER")
 
+// RmqCH name
+var RmqCH = os.Getenv("APP_RMQ_CHANNEL")
+
 // AppRedis name
 var AppRedis = os.Getenv("APP_REDIS_SERVER") + ":" + os.Getenv("APP_REDIS_PORT")
 
@@ -68,12 +71,12 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when usused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		RmqCH, // name
+		false, // durable
+		false, // delete when usused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
 	)
 
 	failOnError(err, "Failed to declare a queue")
@@ -106,7 +109,7 @@ func main() {
 	router.HandleFunc("/readinez", readinessHandler)
 	router.Handle("/metrics", promhttp.Handler())
 
-	router.HandleFunc("/", appHandler)
+	//	router.HandleFunc("/", appHandler)
 
 	log.Fatal(http.ListenAndServe(":"+AppPort, router))
 }
@@ -125,7 +128,7 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 func readinessHandler(w http.ResponseWriter, r *http.Request) {
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     AppRedis,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
@@ -134,19 +137,6 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Not Ready", http.StatusServiceUnavailable)
 	}
-
-	db, err := sql.Open("mysql", AppDb)
-	if err != nil {
-		http.Error(w, "Not Ready", http.StatusServiceUnavailable)
-	}
-	defer db.Close()
-	err = db.Ping()
-
-	if err != nil {
-		http.Error(w, "Not Ready", http.StatusServiceUnavailable)
-	}
-
-	w.Write([]byte("200"))
 
 }
 

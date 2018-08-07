@@ -1,0 +1,81 @@
+---
+# Source: demo-app/templates/deployment.yaml
+# for versions before 1.9.0 use apps/v1beta2
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: msrn-rate
+spec:
+  selector:
+    matchLabels:
+      app: msrn-rate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: msrn-rate
+        version: rate-v3.5.1-07ae634
+    spec:
+      containers:
+      - name: front
+        image: msrn/services:rate-v3.5.1-dc786bd
+        env:
+        - name: APP_PORT
+          value: "80"
+        - name: APP_REDIS_SERVER
+          value: redis.db.svc.cluster.local
+        - name: APP_REDIS_PORT
+          value: "6379"
+        - name: APP_DB_SERVER
+          value: "rate.db"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 80
+          name: http
+        securityContext:
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /readinez
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 3
+
+---
+# Source: demo-app/templates/service.yaml
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: msrn-rate
+  labels:
+    app: msrn-rate
+  annotations:
+    getambassador.io/config: |
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name:  msrn-rate
+      prefix: /rate/
+      service: msrn-rate
+spec:
+  ports:
+  - name: msrn-rate
+    port: 80
+    targetPort: 80
+  selector:
+    app: msrn-rate
+
+
+
+

@@ -46,9 +46,6 @@ var AppDb = os.Getenv("APP_DB_SERVER")
 // AppRmq name
 var AppRmq = os.Getenv("APP_RMQ_SERVER")
 
-// RmqCH name
-var RmqCH = os.Getenv("APP_RMQ_CHANNEL")
-
 // AppRedis name
 var AppRedis = os.Getenv("APP_REDIS_SERVER") + ":" + os.Getenv("APP_REDIS_PORT")
 
