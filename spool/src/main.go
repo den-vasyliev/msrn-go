@@ -49,6 +49,9 @@ var AppRmq = os.Getenv("APP_RMQ_SERVER")
 // RmqCH name
 var RmqCH = os.Getenv("APP_RMQ_CHANNEL")
 
+// RmqID credentials
+var RmqID = os.Getenv("RABBITMQ_DEFAULT_USER") + ":" + os.Getenv("RABBITMQ_DEFAULT_PASS")
+
 // AppRedis name
 var AppRedis = os.Getenv("APP_REDIS_SERVER") + ":" + os.Getenv("APP_REDIS_PORT")
 
@@ -62,7 +65,7 @@ func main() {
 	sink, _ := prometheus.NewPrometheusSink()
 	metrics.NewGlobal(metrics.DefaultConfig("API"), sink)
 
-	conn, err := amqp.Dial("amqp://guest:guest@" + AppRmq + ":5672/")
+	conn, err := amqp.Dial("amqp://" + RmqID + "@" + AppRmq + ":5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 

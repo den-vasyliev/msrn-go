@@ -46,6 +46,9 @@ var AppDb = os.Getenv("APP_DB_SERVER")
 // AppRmq name
 var AppRmq = os.Getenv("APP_RMQ_SERVER")
 
+// RmqID credentials
+var RmqID = os.Getenv("RABBITMQ_DEFAULT_USER") + ":" + os.Getenv("RABBITMQ_DEFAULT_PASS")
+
 // AppRedis name
 var AppRedis = os.Getenv("APP_REDIS_SERVER") + ":" + os.Getenv("APP_REDIS_PORT")
 
@@ -163,7 +166,7 @@ func appHandler(w http.ResponseWriter, r *http.Request) {
 		r2 := r.FindAllStringSubmatch(Q.Get("calldestination"), -1)
 		fmt.Println(r2, Q.Get("imsi"))
 
-		conn, err := amqp.Dial("amqp://guest:guest@" + AppRmq + ":5672/")
+		conn, err := amqp.Dial("amqp://" + RmqID + "@" + AppRmq + ":5672/")
 		failOnError(err, "Failed to connect to RabbitMQ")
 		defer conn.Close()
 
