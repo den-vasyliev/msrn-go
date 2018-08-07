@@ -44,10 +44,7 @@ var AppPort = os.Getenv("APP_PORT")
 var AppDb = os.Getenv("APP_DB_SERVER")
 
 // AppRedis Server
-var AppRedis = os.Getenv("APP_REDIS_SERVER")
-
-// AppRedis Port
-var AppRedisPort = os.Getenv("APP_REDIS_PORT")
+var AppRedis = os.Getenv("APP_REDIS_SERVER") + ":" + os.Getenv("APP_REDIS_PORT")
 
 type msisdn struct {
 	Msisdn string `json:"msisdn"`
@@ -86,7 +83,7 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 func readinessHandler(w http.ResponseWriter, r *http.Request) {
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     AppRedis:AppRedisPort,
+		Addr:     AppRedis,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
@@ -101,9 +98,9 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "DB Not Ready", http.StatusServiceUnavailable)
 	}
 	defer db.Close()
-	
+
 	err = db.Ping()
-    if err != nil {
+	if err != nil {
 		http.Error(w, "DB Not Reachable", http.StatusServiceUnavailable)
 	}
 
@@ -200,7 +197,7 @@ func getRate(msisdn string) rateStruct {
 	}
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     AppRedis:AppRedisPort, //Addr:     "redis:6379",
+		Addr:     AppRedis, //Addr:"redis:6379",
 		Password: "",       // no password set
 		DB:       0,        // use default DB
 	})
