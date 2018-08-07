@@ -60,12 +60,8 @@ func main() {
 	router.HandleFunc("/healthz", healthzHandler)
 	router.HandleFunc("/readinez", readinessHandler)
 	router.Handle("/metrics", promhttp.Handler())
+	router.HandleFunc("/", rateHandler)
 
-	switch AppName {
-	case "rate":
-		router.HandleFunc("/", rateHandler)
-
-	}
 	log.Fatal(http.ListenAndServe(":"+AppPort, router))
 }
 
