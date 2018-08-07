@@ -40,11 +40,14 @@ var Revision = fmt.Sprintf("%s version: %s+%s", AppName, Version, BuildInfo)
 // AppPort app
 var AppPort = os.Getenv("APP_PORT")
 
-// AppDb name
+// AppDb Server
 var AppDb = os.Getenv("APP_DB_SERVER")
 
-// AppRedis name
+// AppRedis Server
 var AppRedis = os.Getenv("APP_REDIS_SERVER")
+
+// AppRedis Port
+var AppRedisPort = os.Getenv("APP_REDIS_PORT")
 
 type msisdn struct {
 	Msisdn string `json:"msisdn"`
@@ -83,28 +86,28 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 func readinessHandler(w http.ResponseWriter, r *http.Request) {
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     AppRedis,
+		Addr:     AppRedis:AppRedisPort,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
 	probe, err := client.Set("readiness_probe", 0, 0).Result()
 	log.Print(probe)
 	if err != nil {
-		http.Error(w, "Not Ready", http.StatusServiceUnavailable)
+		http.Error(w, "Cache Not Ready", http.StatusServiceUnavailable)
 	}
 
 	db, err := sql.Open("sqlite3", AppDb)
 	if err != nil {
-		http.Error(w, "Not Ready", http.StatusServiceUnavailable)
+		http.Error(w, "DB Not Ready", http.StatusServiceUnavailable)
 	}
 	defer db.Close()
+	
 	err = db.Ping()
-
-	if err != nil {
-		http.Error(w, "Not Ready", http.StatusServiceUnavailable)
+    if err != nil {
+		http.Error(w, "DB Not Reachable", http.StatusServiceUnavailable)
 	}
 
-	w.Write([]byte("200"))
+	//w.Write([]byte("200"))
 
 }
 
@@ -197,7 +200,7 @@ func getRate(msisdn string) rateStruct {
 	}
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     AppRedis, //Addr:     "redis:6379",
+		Addr:     AppRedis:AppRedisPort, //Addr:     "redis:6379",
 		Password: "",       // no password set
 		DB:       0,        // use default DB
 	})
