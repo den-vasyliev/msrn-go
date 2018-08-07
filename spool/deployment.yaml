@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: msrn-spool
-        version: sigapp-v3.5.1-c31b1f9
+        version: spool-v3.5.1-5d484f4
     spec:
       containers:
       - env:
