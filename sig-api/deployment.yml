@@ -39,7 +39,7 @@ spec:
             secretKeyRef:
               name: rmq-rabbitmq-ha
               key: rabbitmq-password
-        image: msrn/services:sigapp-v3.5.1-c31b1f9
+        image: msrn/services:sigapi-v3.5.1-7864b85
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
