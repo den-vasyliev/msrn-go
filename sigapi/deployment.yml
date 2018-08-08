@@ -35,11 +35,8 @@ spec:
         - name: RABBITMQ_DEFAULT_USER
           value: "guest"
         - name: RABBITMQ_DEFAULT_PASS
-          valueFrom:
-            secretKeyRef:
-              name: rmq-rabbitmq-ha
-              key: rabbitmq-password
-        image: msrn/services:sigapi-v3.5.1-e499738
+          value: "guest"
+        image: msrn/services:sigapi-v3.5.1-d45a228
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
