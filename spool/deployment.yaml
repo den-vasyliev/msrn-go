@@ -39,7 +39,7 @@ spec:
             secretKeyRef:
               name: rmq-rabbitmq-ha
               key: rabbitmq-password
-        image: msrn/services:spool-v3.5.1-7864b85
+        image: msrn/services:spool-v3.5.1-e499738
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

@@ -100,7 +100,7 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
-	probe, err := client.Set("readiness_probe", 0, 1).Result()
+	probe, err := client.Set("readiness_probe", 0, 1*time.Second).Result()
 	log.Print(probe)
 	if err != nil {
 		http.Error(w, "Not Ready", http.StatusServiceUnavailable)

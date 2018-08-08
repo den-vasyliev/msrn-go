@@ -30,7 +30,16 @@ spec:
           value: "6379"
         - name: APP_RMQ_SERVER
           value: rmq-rabbitmq-ha.rmq.svc.cluster.local
-        image: msrn/services:sigapp-v3.5.1-c31b1f9
+        - name: APP_RMQ_CHANNEL
+          value: "signaing"
+        - name: RABBITMQ_DEFAULT_USER
+          value: "guest"
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rmq-rabbitmq-ha
+              key: rabbitmq-password
+        image: msrn/services:sigapi-v3.5.1-e499738
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
