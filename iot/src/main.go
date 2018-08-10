@@ -133,6 +133,12 @@ func main() {
 			enc.Encode(PnMessages)
 
 			log.Printf("Convert a message: %s", PnMessages.Iot)
+			var a string
+			req, err := http.NewRequest("GET", "https://ps.pndsn.com/publish/pub-c-356be33a-08e5-4678-a737-f3f0527a0a64/sub-c-5e07b1f2-9ba2-11e8-9a92-b209910313bb/0/channel-mapbox/myCallback/%7B%22text%22%3A%22hey%22%7D?store=0&uuid=db9c5e39-7c95-40f5-8d71-125765b6f561", bytes.NewBuffer([]byte(a)))
+			log.Print(err)
+			client := &http.Client{Timeout: time.Second * 5}
+			resp, _ := client.Do(req)
+			log.Print(resp)
 			log.Println(rest(PnUrl+PublishKey+"/"+SubscribeKey+"/0/"+PnChannel+"/0", string(PnMessages.Iot)))
 			/** message := struct {
 							Latlng [2]float64 `json:"latlng"`

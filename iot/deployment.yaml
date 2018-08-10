@@ -1,0 +1,104 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+  name: msrn-iot
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: msrn-iot
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 50%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: msrn-iot
+        version: iot-v3.5.1-5f3fe88
+    spec:
+      containers:  
+      - name: iot     
+        image: msrn/services:iot-v3.5.1-5f3fe88
+        envFrom: 
+        - configMapRef: 
+            name: iot-configmap
+            key:
+        env:
+          - name: APP_PN_PUBKEY
+            valueFrom: 
+              secretKeyRef: 
+                name:  iot-pnpub-key
+                key:  key
+          - name: APP_PN_SUBKEY
+            valueFrom: 
+              secretKeyRef: 
+                name:  iot-pnsub-key
+                key:  key  
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readinez
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    getambassador.io/config: |
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name:  msrn-iot
+      prefix: /iot/
+      service: msrn-iot
+  creationTimestamp: null
+  labels:
+    app: msrn-iot
+  name: msrn-iot
+spec:
+  ports:
+  - name: msrn-iot
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: msrn-iot
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}

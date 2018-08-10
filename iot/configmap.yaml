@@ -1,0 +1,14 @@
+apiVersion:  v1
+kind:  ConfigMap
+metadata:
+  name:  iot-configmap
+data:
+# Configmap Variables
+  APP_PORT: "80"
+  APP_REDIS_SERVER: "redis.db.svc.cluster.local"
+  APP_REDIS_PORT: "6379"
+  APP_RMQ_SERVER: "rmq-rabbitmq-ha.rmq.svc.cluster.local"
+  APP_RMQ_CHANNEL: "channel-mapbox"
+  RABBITMQ_DEFAULT_USER: "guest"
+  RABBITMQ_DEFAULT_PASS: "guest"
+  APP_PN_CHANNEL: "channel-mapbox"
