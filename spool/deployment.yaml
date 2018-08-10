@@ -36,7 +36,7 @@ spec:
           value: "guest"
         - name: RABBITMQ_DEFAULT_PASS
           value: "guest"
-        image: msrn/services:spool-v3.5.1-e499738
+        image: msrn/services:spool-v3.5.1-44c4992
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

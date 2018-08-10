@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"database/sql"
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,6 +22,7 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	pubnub "github.com/pubnub/go"
 	"github.com/streadway/amqp"
 )
 
@@ -49,33 +51,111 @@ var AppRmq = os.Getenv("APP_RMQ_SERVER")
 // RmqCH name
 var RmqCH = os.Getenv("APP_RMQ_CHANNEL")
 
-// PnChannel name
-var PnChannel = os.Getenv("APP_PN_CHANNEL")
-
 // RmqID credentials
 var RmqID = os.Getenv("RABBITMQ_DEFAULT_USER") + ":" + os.Getenv("RABBITMQ_DEFAULT_PASS")
 
 // AppRedis name
 var AppRedis = os.Getenv("APP_REDIS_SERVER") + ":" + os.Getenv("APP_REDIS_PORT")
 
+// PublishKey key
+var PublishKey = os.Getenv("APP_PN_PUBKEY")
+
+// SubscribeKey key
+var SubscribeKey = os.Getenv("APP_PN_SUBKEY")
+
+// PnChannel name
+var PnChannel = os.Getenv("APP_PN_CHANNEL")
+
+// PnUrl
+var PnUrl = "https://ps.pndsn.com/publish/"
+
 type apiStruct struct {
 	APIVersion string `json:"apiVersion"`
 }
 
-type apiSignaling struct {
-	Msisdn string `json:"msisdn"`
-	Imsi   string `json:"imsi"`
-	Mcc    string `json:"mcc"`
-	Mnc    string `json:"mnc"`
-	Tadig  string `json:"tadig"`
-	Iccid  string `json:"iccid"`
-	Rt     string `json:"rt"`
+// PnMessage ...
+type PnMessage struct {
+	Iot []byte `json:"iot"`
 }
 
 func main() {
+
 	log.Print(Revision)
 	sink, _ := prometheus.NewPrometheusSink()
 	metrics.NewGlobal(metrics.DefaultConfig("API"), sink)
+
+	config := pubnub.NewConfig()
+	config.PublishKey = PublishKey
+	config.SubscribeKey = SubscribeKey
+
+	//pn := pubnub.NewPubNub(config)
+
+	conn, err := amqp.Dial("amqp://" + RmqID + "@" + AppRmq + ":5672/")
+	failOnError(err, "Failed to connect to RabbitMQ")
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	failOnError(err, "Failed to open a channel")
+	defer ch.Close()
+
+	q, err := ch.QueueDeclare(
+		RmqCH, // name
+		false, // durable
+		false, // delete when usused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+
+	failOnError(err, "Failed to declare a queue")
+	msgs, err := ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+
+	failOnError(err, "Failed to register a consumer")
+
+	go func() {
+		var PnMessages PnMessage
+		buf := new(bytes.Buffer)
+
+		for d := range msgs {
+			log.Printf("Received a message: %s", d.Body)
+			PnMessages.Iot, _ = b64.URLEncoding.DecodeString(string(d.Body))
+			fmt.Println(PnMessages.Iot)
+			//if len(m.APIVersion) > 4 {
+			enc := json.NewEncoder(buf)
+			enc.Encode(PnMessages)
+
+			log.Printf("Convert a message: %s", PnMessages.Iot)
+			log.Println(rest(PnUrl+PublishKey+"/"+SubscribeKey+"/0/"+PnChannel+"/0", string(PnMessages.Iot)))
+			/** message := struct {
+							Latlng [2]float64 `json:"latlng"`
+						}{[2]float64{50.456114, 30.567914}}
+			**/
+			//a := `{"latlng":[50.4581,30.487437999999997]}`
+			/**
+						res, status, err := pn.Publish().
+							Channel(PnChannel).
+							Message(map[string]interface{}{
+								"latlng": "[50.4581,30.487437999999997]",
+							}).
+							UsePost(true).
+							Execute()
+
+			**/
+			// handle publish result
+			//fmt.Println(res, status, err)
+			buf.Reset()
+		}
+	}()
+
+	//log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/version", versionHandler)
@@ -83,7 +163,7 @@ func main() {
 	router.HandleFunc("/readinez", readinessHandler)
 	router.Handle("/metrics", promhttp.Handler())
 
-	router.HandleFunc("/", appHandler)
+	//	router.HandleFunc("/", appHandler)
 
 	log.Fatal(http.ListenAndServe(":"+AppPort, router))
 }
@@ -106,7 +186,7 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
-	probe, err := client.Set("readiness_probe", 0, 1*time.Second).Result()
+	probe, err := client.Set("readiness_probe", 0, 0).Result()
 	log.Print(probe)
 	if err != nil {
 		http.Error(w, "Not Ready", http.StatusServiceUnavailable)
@@ -154,13 +234,7 @@ func readiness(url string) string {
 
 func appHandler(w http.ResponseWriter, r *http.Request) {
 	metrics.IncrCounter([]string{"requestCounter"}, 1)
-
-	conn, err := amqp.Dial("amqp://" + RmqID + "@" + AppRmq + ":5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
 	var m apiStruct
-	//var s apiSignaling
 	switch r.Method {
 	case "GET":
 		log.Printf("Get GET Request!")
@@ -169,53 +243,15 @@ func appHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		Q := u.Query()
-		body := ""
-		R2 := ""
 
 		r, err := regexp.Compile(`^\*(?P<USSD_CODE>\d{3})[\*|\#](?P<USSD_DEST>\D{0,}\d{0,}).?(?P<USSD_EXT>.{0,}).?`)
 		if err != nil {
 			log.Print(err)
 		}
+		r2 := r.FindAllStringSubmatch(Q.Get("calldestination"), -1)
+		fmt.Println(r2[0][1])
 
-		if Q.Get("request_type") == "LU_CDR" {
-			body = Q.Get("iot")
-			RmqCH = PnChannel
-			R2 = Q.Get("tadig")
-
-		} else {
-
-			R2 := r.FindAllStringSubmatch(Q.Get("calldestination"), -1)
-			fmt.Println(R2, Q.Get("imsi"))
-			body = R2[0][2]
-		}
-
-		ch, err := conn.Channel()
-		failOnError(err, "Failed to open a channel")
-		defer ch.Close()
-
-		q, err := ch.QueueDeclare(
-			RmqCH, // name
-			false, // durable
-			false, // delete when unused
-			false, // exclusive
-			false, // no-wait
-			nil,   // arguments
-		)
-		failOnError(err, "Failed to declare a queue")
-
-		//body := r2[0][2]
-		err = ch.Publish(
-			"",     // exchange
-			q.Name, // routing key
-			false,  // mandatory
-			false,  // immediate
-			amqp.Publishing{
-				ContentType: "text/plain",
-				Body:        []byte(body),
-			})
-		failOnError(err, "Failed to publish a message")
-
-		w.Write([]byte(fmt.Sprintf("Spooling %s for %s", R2, Q.Get("imsi"))))
+		w.Write([]byte("Please use POST"))
 
 	case "POST":
 		b, _ := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
@@ -263,10 +299,9 @@ func API(verson string) apiStruct {
 	client.Ping()
 	return apiResult
 }
-
 func failOnError(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %s", msg, err)
-		log.Print(fmt.Sprintf("%s: %s", msg, err))
+		panic(fmt.Sprintf("%s: %s", msg, err))
 	}
 }
