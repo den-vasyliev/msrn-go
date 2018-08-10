@@ -207,7 +207,7 @@ func rest(url string, jsonStr string) []byte {
 	client := &http.Client{Timeout: time.Second * 5}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		log.Print(err)
 	}
 	defer resp.Body.Close()
 

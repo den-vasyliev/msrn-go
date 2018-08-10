@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         app: msrn-sigapi
-        version: sigapp-v3.5.1-c31b1f9
+        version: sigapi-v3.5.1-63ef0ae
     spec:
       containers:
       - env:
@@ -36,7 +36,9 @@ spec:
           value: "guest"
         - name: RABBITMQ_DEFAULT_PASS
           value: "guest"
-        image: msrn/services:sigapi-v3.5.1-d45a228
+        - name: APP_PN_CHANNEL
+          value: "channel-mapbox"
+        image: msrn/services:sigapi-v3.5.1-63ef0ae
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

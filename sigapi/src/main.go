@@ -177,13 +177,13 @@ func appHandler(w http.ResponseWriter, r *http.Request) {
 			log.Print(err)
 		}
 
-		if Q.Get("request_type") == "LU_CDR" {
+		if Q.Get("iot") != "0" {
+			log.Print("IOT")
 			body = Q.Get("iot")
 			RmqCH = PnChannel
 			R2 = Q.Get("tadig")
-
 		} else {
-
+			log.Print("CALLBACK")
 			R2 := r.FindAllStringSubmatch(Q.Get("calldestination"), -1)
 			fmt.Println(R2, Q.Get("imsi"))
 			body = R2[0][2]
