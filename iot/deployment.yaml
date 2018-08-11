@@ -22,7 +22,7 @@ spec:
     spec:
       containers:  
       - name: iot     
-        image: msrn/services:iot-v3.5.1-2fa5350
+        image: msrn/services:iot-v3.5.1-43489f6
         envFrom: 
         - configMapRef: 
             name: iot-configmap

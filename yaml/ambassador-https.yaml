@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    service: ambassador-https
+  name: ambassador-https
+spec:
+  type: NodePort
+  ports:
+  - name: ambassador-https
+    port: 443
+    targetPort: 443
+  selector:
+    service: ambassador
