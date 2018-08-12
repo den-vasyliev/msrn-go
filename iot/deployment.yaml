@@ -1,7 +1,6 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  annotations:
   name: msrn-iot
 spec:
   replicas: 1
@@ -9,7 +8,7 @@ spec:
   selector:
     matchLabels:
       app: msrn-iot
-  strategy:
+  strategy:  
     rollingUpdate:
       maxSurge: 50%
       maxUnavailable: 50%
@@ -18,11 +17,11 @@ spec:
     metadata:
       labels:
         app: msrn-iot
-        version: iot-v3.5.1-5f3fe88
+        version: iot-v3.5.1-ec451ea
     spec:
       containers:  
       - name: iot     
-        image: msrn/services:iot-v3.5.1-43489f6
+        image:  msrn/services:iot-v3.5.1-ec451ea
         envFrom: 
         - configMapRef: 
             name: iot-configmap
@@ -86,7 +85,6 @@ metadata:
       name:  msrn-iot
       prefix: /iot/
       service: msrn-iot
-  creationTimestamp: null
   labels:
     app: msrn-iot
   name: msrn-iot
@@ -98,7 +96,4 @@ spec:
     targetPort: 80
   selector:
     app: msrn-iot
-  sessionAffinity: None
   type: ClusterIP
-status:
-  loadBalancer: {}
