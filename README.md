@@ -1,2 +1,2 @@
 # msrn-go
-![alt text](msrn-go/img/msrn-go.png)
+![service schema](../docs/img/msrn-go.png)
