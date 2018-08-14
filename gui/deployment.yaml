@@ -1,0 +1,93 @@
+---
+# Source: demo-app/templates/deployment.yaml
+# for versions before 1.9.0 use apps/v1beta2
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: msrn-gui
+spec:
+  selector:
+    matchLabels:
+      app: msrn-gui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: msrn-gui
+        version: v3.5.1-procamp
+    spec:
+      containers:
+      - name: gui
+        image: msrn/msrn-front:v3.5.1-07075 
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 443
+          name: https
+        securityContext:
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 3
+
+---
+# Source: demo-app/templates/service.yaml
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: msrn-gui
+  labels:
+    app: msrn-gui
+  annotations:
+    
+    getambassador.io/config: |
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name:  msrn-gui
+      prefix: /
+      service: msrn-gui
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name:  msrn-gui-media
+      prefix: /media
+      rewrite: /media
+      service: msrn-gui
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name:  msrn-gui-default
+      prefix: "/(.*)"
+      prefix_regex: true
+      service: msrn-gui
+      
+spec:
+  ports:
+  - name: msrn-gui-main
+    port: 80
+    targetPort: 80
+  - name: msrn-gui-secure
+    port: 443
+    targetPort: 443
+  selector:
+    app: msrn-gui
+
+
+
+

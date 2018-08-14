@@ -1,0 +1,66 @@
+---
+# Source: demo-app/templates/deployment.yaml
+# for versions before 1.9.0 use apps/v1beta2
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: msrn
+spec:
+  selector:
+    matchLabels:
+      app: msrn
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: msrn
+        version: v3.5.1-procamp-213970d
+    spec:
+      containers:
+      - name: front
+        image: msrn/msrn-pre-prod
+        env:
+          - name: REDIS_SERVER
+            value: redis.db.svc.cluster.local:6379
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 35001
+        securityContext:
+        livenessProbe:
+          tcpSocket:
+            port: 35001
+          initialDelaySeconds: 10
+          periodSeconds: 3
+        readinessProbe:
+          tcpSocket:
+            port: 35001
+          initialDelaySeconds: 15
+          periodSeconds: 3
+
+---
+# Source: demo-app/templates/service.yaml
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: msrn
+  labels:
+    app: msrn
+  annotations:
+      
+spec:
+  ports:
+  - name: msrn-front
+    port: 35001
+    targetPort: 35001
+  selector:
+    app: msrn
+
+
+
+
