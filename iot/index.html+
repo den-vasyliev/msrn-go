@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset=utf-8 />
+    <title>PRO camp</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        position:absolute;
+        top:0;
+        bottom:0;
+        width:100%;
+      }
+    </style>
+
+    <script type="text/javascript" src="https://pubnub.github.io/eon/v/eon/1.1.0/eon.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://pubnub.github.io/eon/v/eon/1.1.0/eon.css"/>
+
+  </head>
+  <body>
+    <div id='map'></div>
+    <script>
+      function getNonZeroRandomNumber(){
+        var random = Math.floor(Math.random()*199) - 99;
+        if(random==0) return getNonZeroRandomNumber();
+        return random;
+      }
+    </script>
+    <script>
+
+      var pn = new PubNub({
+        publishKey:   'pub-c-356be33a-08e5-4678-a737-f3f0527a0a64',
+      subscribeKey: 'sub-c-5e07b1f2-9ba2-11e8-9a92-b209910313bb',
+        ssl: (('https:' == document.location.protocol) ? true : false)
+      });
+
+      function getNonZeroRandomNumber(){
+        var random = Math.floor(Math.random()*199) - 99;
+        if(random==0) return getNonZeroRandomNumber();
+        return random;
+      }
+
+      var channel = 'channel-mapbox';
+      
+      
+      var map = eon.map({
+        pubnub: pn,
+        id: 'map',
+        mbId: 'ianjennings.l896mh2e',
+        mbToken: 'pk.eyJ1IjoiZGVueXMtdmFzeWxpZXYiLCJhIjoiY2prbWIyMDdpMmE2dzNwcDl5M3oyZ3A0cyJ9.UAm7gOd7xIppMRSzjanVYw',
+        channels:[channel],
+        marker: function (latlng, data) {
+                
+          var marker = new L.marker(latlng)
+//console.log(data);
+    var popup = '';
+    popup = "TruckId: "+ data[0].id+"<br>Speed: "+ data[0].speedKmHr+" KmHr"+"<br>Tag: "+data[0].tag+"<br>Route: "+data[0].routeTag
+    if(!popup.length) {
+      var popup = 'No data available';
+    }
+    var myicon =  L.icon({
+    iconUrl: 'https://www.amadeo.pl/wp-content/uploads/2016/08/Transport-Truck-icon.png',
+    iconSize: [24, 24]
+    });
+
+    marker.setIcon(myicon);
+    marker.bindPopup(popup);
+          return marker},
+        //connect: connect,
+        message: function (data) {
+          map.setView(data[3].latlng, 13);
+        }
+      });
+
+    </script>
+
+  </body>
+</html>
